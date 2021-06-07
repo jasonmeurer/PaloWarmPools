@@ -125,6 +125,7 @@ Parameters:
     Description: Firewall VPC - Availability Zone 1
     Type: AWS::EC2::AvailabilityZone::Name
     ConstraintDescription: Valid Availability Zone Id
+    Default: us-west-2a
   TgwAttachSubnet1Cidr:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
     Default: 192.168.1.0/28
@@ -147,6 +148,7 @@ Parameters:
     Description: Firewall VPC - Availability Zone 2
     Type: AWS::EC2::AvailabilityZone::Name
     ConstraintDescription: Valid Availability Zone Id
+    Default: us-west-2b
   TgwAttachSubnet2Cidr:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
     Default: 192.168.1.48/28
@@ -185,6 +187,7 @@ Parameters:
     Description: EC2 KeyPair required for accessing EC2 instance
     Type: AWS::EC2::KeyPair::KeyName
     ConstraintDescription: Must be the name of an existing EC2 KeyPair
+    Default: awsmain
   AccessLocation:
     Description: >-
       Enter desired Network CIDR to allow traffic to Firewall. Default is set to
@@ -214,6 +217,7 @@ Parameters:
     Description: >- 
       Firewall AMI ID
     Type: AWS::EC2::Image::Id
+    Default: ami-0073e5cfb0d4d3b28
   VMSeriesInstanceType:  
     Description: >- 
       Firewall Instance model
@@ -258,6 +262,7 @@ Parameters:
     Description: >- 
       Firewall Bootstrap Bucket
     Type: String  
+    Default: jjmwarmwest2
   lambdapackagezip:
     Description: >-
       Zip file containing the ASG Lambda files
@@ -267,35 +272,38 @@ Parameters:
     Description: >-
       ASG Min Size
     Type: Number
-    Default: 2     
+    Default: 1     
   MaxSize:
     Description: >-
       ASG Max Size
     Type: Number
-    Default: 2  
+    Default: 1  
   WarmPoolMinSize: 
     Description: >-
       Minimum firewalls in the Warm Pool
     Type: Number
-    Default: 2              
+    Default: 1              
   DesiredCapacity:
     Description: >-
       ASG Desired Size
     Type: Number
-    Default: 2
+    Default: 1
   csplicensekey:
     Description: >-
         API Key to DeRegister firewall from CSP.  Leave blank if using PayGo
+    Default: a304904fb7b036f5d320dc8ced49648c5eee25c5ad0221a4b9eea83c207f6950
     Type: String
     NoEcho: True
   KeyPANWFirewall:
     Description: >-
         API Key access the firewall.  Should correspond to credentials pushed from Panorama
+    Default: LUFRPT1Zd2pYUGpkMUNrVEZlb3hROEQyUm95dXNGRkU9N0d4RGpTN2VZaVZYMVVoS253U0p6dlk3MkM0SDFySEh2UUR4Y3hzK2g3ST0=
     Type: String 
     NoEcho: True  
   KeyPANWPanorama:
     Description: >-
         API Key access the Panorama.  
+    Default: LUFRPT1OcW9tMDN3ZXR4VlNMUjVjQUVKb2RSYmpUSzQ9U0RYZlczdCtmRTJ3NG8rR2lPbVZWWjBnTTVoNjhYYnp3eit0TmdhemVnMjBPRUwySjdVdzZXbFUzeHMxWGZ5TA==
     Type: String     
     NoEcho: True       
   CloudWatchScalingNamespace:
@@ -659,8 +667,6 @@ Resources:
       HealthCheckPort: !Ref HealthPort
       HealthCheckProtocol: !Ref HealthProtocol
       TargetType: instance
-      # Targets:
-      #   #- Id: !Ref GWLBFW1
       Tags:
       - Key: Name
         Value: !Join 
@@ -800,14 +806,6 @@ Resources:
     Properties:
       ServiceToken: !GetAtt VpceServiceName.Arn
       VpceServiceId: !Ref VpcEndpointService
-
-
-## Lambda to update ASG Size
-  # asgupdateLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties:
-  #       LogGroupName: !Sub /aws/lambda/${AWS::StackName}-asg-size-update
-  #       RetentionInDays: 1   
         
   asgupdateServiceName:
     Type: AWS::Lambda::Function
@@ -826,83 +824,6 @@ Resources:
       Code:
         S3Bucket: !Ref VmseriesBootstrapS3BucketName
         S3Key: !Ref lambdapackagezip      
-      # Code:
-      #   ZipFile: |       
-          # import json
-          # import logging
-          # import time
-
-          # # import boto3
-          # import cfnresponse
-          # from botocore.exceptions import ClientError
-
-          # logger = logging.getLogger()
-          # logger.setLevel(logging.INFO)
-
-          # import sys
-          # from pip._internal import main
-          # try:
-          #     main(['install', '-I', '-q', 'boto3', '--target', '/tmp/', '--no-cache-dir', '--upgrade', '--disable-pip-version-check'])
-          #     sys.path.insert(1,'/tmp/')
-          # except:
-          #     logger.info("boto3 upgrade failed")
-
-          # import boto3
-
-
-          # logger.info("boto3 version: %s",boto3.__version__)
-
-          # def lambda_handler(event, context):
-          #   responseData = {}
-          #   responseStatus = cfnresponse.FAILED
-          #   logger.info("Launch:full event")
-          #   logger.info(json.dumps(event))            
-          #   try:
-          #     client = boto3.client("autoscaling")
-          #     logger.info("set client success")
-          #   except:
-          #     logger.info("set client failed")
-
-          #   try:
-          #     if event["RequestType"] == "Delete":    
-          #       responseStatus = cfnresponse.SUCCESS
-          #       cfnresponse.send(event, context, responseStatus, responseData)
-          #   except:
-          #     logger.exception("Signaling failure to CloudFormation.")
-          #     cfnresponse.send(event, context, cfnresponse.FAILED, {})   
-
-          #   if event["RequestType"] == "Create":
-          #     try:
-          #       FirewallASGVar = event["ResourceProperties"]["FirewallASGVar"] 
-          #       MinSizeVar = event["ResourceProperties"]["MinSizeVar"] 
-          #       MaxSizeVar = event["ResourceProperties"]["MaxSizeVar"] 
-          #       WarmMinSizeVar = event["ResourceProperties"]["WarmMinSizeVar"] 
-          #       DesiredCapacityVar = event["ResourceProperties"]["DesiredCapacityVar"] 
-          #       logger.info("set vars success: %s %s %s %s %s", FirewallASGVar, MinSizeVar, MaxSizeVar, DesiredCapacityVar, WarmMinSizeVar)
-          #     except:
-          #       logger.info("set vars failed")
-                
-          #     try:
-          #       response = client.update_auto_scaling_group(
-          #         AutoScalingGroupName=FirewallASGVar,
-          #         MinSize=int(MinSizeVar),
-          #         MaxSize=int(MaxSizeVar),
-          #         DesiredCapacity=int(DesiredCapacityVar),
-          #       )
-          #       logger.info("autoscale update success %s", response)
-          #       responsewarm = client.put_warm_pool(
-          #           AutoScalingGroupName=FirewallASGVar,
-          #           MinSize=int(WarmMinSizeVar)
-          #           # PoolState='Stopped'
-          #       )      
-          #       logger.info("warm pool update success %s", responsewarm)
-          #       responseStatus = cfnresponse.SUCCESS
-          #       cfnresponse.send(event, context, responseStatus, responseData)
-          #     except:
-          #       logger.info("autoscale update failed: ")  
-              
-                
-          #     cfnresponse.send(event, context, responseStatus, responseData)                    
 
   CustomResASG:
     Type: Custom::SetASGSize
@@ -1246,7 +1167,6 @@ Resources:
         Version: !GetAtt FirewallTemplate.DefaultVersionNumber
       MaxSize: '0'
       MinSize: '0'
-      # DesiredCapacity: !Ref DesiredCapacity
       MetricsCollection:
         - Granularity: 1Minute
           Metrics:
@@ -1295,37 +1215,6 @@ Resources:
             - '", "KeyPANWPanorama": "'    
             - !Ref KeyPANWPanorama                                  
             - '" }'     
-
-
-  # updateASG:
-  #   Type: AWS::AutoScaling::AutoScalingGroup
-  #   DependsOn:
-  #     - LambdaWarmPermission
-  #     - LambdaLaunchPermission
-  #     - LambdaTerminatePermission
-  #   Properties:
-  #     AutoScalingGroupName: !Sub ${AWS::StackName}-ASG
-  #     MaxSize: !Ref MaxSize
-  #     MinSize: !Ref MinSize
-  #     DesiredCapacity: !Ref DesiredCapacity   
-  #     AvailabilityZones:
-  #       - !Ref AvailabilityZone1
-  #       - !Ref AvailabilityZone2
-  #     LaunchTemplate: 
-  #       LaunchTemplateId: !Ref FirewallTemplate
-  #       Version: !GetAtt FirewallTemplate.DefaultVersionNumber         
-
-## Warm Pool
-  # WarmPoolAsg:
-  #   Type: AWS::AutoScaling::WarmPool
-  #   DependsOn:
-  #     - LambdaWarmPermission
-  #     - LambdaLaunchPermission
-  #     - LambdaTerminatePermission    
-  #   Properties: 
-  #     AutoScalingGroupName: !Ref FirewallASG 
-  #     MinSize: !Ref WarmPoolMinSize
-
 
 ## EventBridge Rules
   WarmEventBridge:
