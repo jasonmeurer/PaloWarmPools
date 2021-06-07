@@ -38,7 +38,7 @@ Certain Assumption and changes have been made from previous iterations of the Pa
         - Dereg if BYOL
     - Update ASG capacities once lifecycle automation is built
         - Must be done after the lifecycle automation is complete otherwise the firewalls start before the lambdas are built.
-    - GWLB Endpoint Service (AWS still does not have a native CFT/TF call for this)    
+    - Retrieve the GWLB Service Name (AWS still does not have a native CFT/TF call for this)    
 - Supports Multiple Zones
 
 
