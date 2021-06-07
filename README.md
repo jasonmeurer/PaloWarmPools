@@ -24,19 +24,21 @@ This repository contains a CloudFormation Template and supporting Lambda Functio
 Certain Assumption and changes have been made from previous iterations of the Palo Alto Networks autoscaling.
 
 - Utilize EventBridge instead of timers
-- Use ASGs with 2 interfaces per instance rather than all of the add eni python scripting
-- Use Cloudwatch retries rather than self calling lambda
+- Use ASGs with 2 interfaces per instance rather than all of the added eni python scripting
+- Cloudwatch will retries a lamnda twice after timeouts.  Implemented the necessary timing rather than selfcalling lambdas.
 - 5 Lambdas
     - Warm Pool Build
         - Check when firewall up before releasing <h3>NOTE this is the critical piece when using Warm Pools.  Other wise the ASG will stop the firewall during the bootstrap process.</h3>
+        - Requires Panorama Push
     - Full service Launch
         - Check when firewall up before releasing
         - Requires Panorama Push
     - Terminate
         - Remove from Panorama
-        - Dereg is BYOL
-    - GWLB Endpoint Service
+        - Dereg if BYOL
     - Update ASG capacities once lifecycle automation is built
+        - Must be done after the lifecycle automation is complete otherwise the firewalls start before the lambdas are built.
+    - GWLB Endpoint Service (AWS still does not have a native CFT/TF call for this)    
 - Supports Multiple Zones
 
 
@@ -55,3 +57,10 @@ Certain Assumption and changes have been made from previous iterations of the Pa
 1. Create an S3 bucket to [bootstrap the firewall](https://docs.paloaltonetworks.com/vm-series/10-0/vm-series-deployment/bootstrap-the-vm-series-firewall/bootstrap-the-vm-series-firewall-in-aws.html) with the init-cfg.txt and any other necessary configuration items. 
 2. Add the asglambdas.zip file to the root of the bootstrap. 
 3. Deploy the cloudformation template.
+
+## To-Do List
+- Cleanup the logging in in the python files, I am currently logging almost everything.
+- Look for areas to improve error handling in the python.
+- Clean-up unused declaration blocks in the yaml.
+- Support User Data bootstrapping of the DG and TS. (Deciding whether or not to just ask for the DG and TS in the template)
+- More Testing without Panorama. (Considered lower priority due to most customers using ASG are also using Panorama)
