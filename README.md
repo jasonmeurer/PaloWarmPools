@@ -59,6 +59,7 @@ Certain Assumption and changes have been made from previous iterations of the Pa
 3. Deploy the cloudformation template.
 
 ## To-Do List
+- Add RFC 1918 Routes to the NatGW RTB
 - Cleanup the logging in in the python files, I am currently logging almost everything.
 - Look for areas to improve error handling in the python.
 - Clean-up unused declaration blocks in the yaml.
