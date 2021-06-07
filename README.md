@@ -65,6 +65,6 @@ Certain Assumption and changes have been made from previous iterations of the Pa
 - Support User Data bootstrapping of the DG and TS. (Deciding whether or not to just ask for the DG and TS in the template)
 - More Testing without Panorama. (Considered lower priority due to most customers using ASG are also using Panorama)
 
-![Diagram](./warmpools.png)
+![Diagram](./warmpoolsdiagram.png)
 
 
