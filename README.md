@@ -59,12 +59,13 @@ Certain Assumption and changes have been made from previous iterations of the Pa
 3. Deploy the cloudformation template.
 
 ## To-Do List
-- Add RFC 1918 Routes to the NatGW RTB
-- Cleanup the logging in in the python files, I am currently logging almost everything.
-- Look for areas to improve error handling in the python.
-- Clean-up unused declaration blocks in the yaml.
-- Support User Data bootstrapping of the DG and TS. (Deciding whether or not to just ask for the DG and TS in the template)
-- More Testing without Panorama. (Considered lower priority due to most customers using ASG are also using Panorama)
+- [x] ~~Add RFC 1918 Routes to the NatGW RTB~~
+- [x] ~~Clean-up unused declaration blocks in the yaml.~~
+- [x] ~~Diagram~~
+- [ ] Cleanup the logging in in the python files, I am currently logging almost everything.
+- [ ] Look for areas to improve error handling in the python.
+- [ ] Support User Data bootstrapping of the DG and TS. (Deciding whether or not to just ask for the DG and TS in the template)
+- [ ] More Testing without Panorama. (Considered lower priority due to most customers using ASG are also using Panorama)
 
 ![Diagram](./warmpoolsdiagram.png)
 

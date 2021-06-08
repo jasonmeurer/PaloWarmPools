@@ -275,22 +275,22 @@ Parameters:
     Description: >-
       ASG Min Size
     Type: Number
-    Default: 1     
+    Default: 0     
   MaxSize:
     Description: >-
       ASG Max Size
     Type: Number
-    Default: 1  
+    Default: 0  
   WarmPoolMinSize: 
     Description: >-
       Minimum firewalls in the Warm Pool
     Type: Number
-    Default: 1              
+    Default: 0              
   DesiredCapacity:
     Description: >-
       ASG Desired Size
     Type: Number
-    Default: 1
+    Default: 0
   csplicensekey:
     Description: >-
         API Key to DeRegister firewall from CSP.  Leave blank if using PayGo
@@ -870,9 +870,33 @@ Resources:
     Type: AWS::EC2::Route
     DependsOn: AttachInternetGateway
     Properties:
-      DestinationCidrBlock: !Ref AccessLocation
+      DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
       RouteTableId: !Ref NatGwRouteTable1
+
+  NatgwRtb1Rfc10Route:
+    Type: AWS::EC2::Route
+    DependsOn: RetrieveVpceServiceName
+    Properties:
+      DestinationCidrBlock: 10.0.0.0/8
+      VpcEndpointId: !Ref GwlbEndpoint1
+      RouteTableId: !Ref NatGwRouteTable1
+
+  NatgwRtb1Rfc172Route:
+    Type: AWS::EC2::Route
+    DependsOn: RetrieveVpceServiceName
+    Properties:
+      DestinationCidrBlock: 172.16.0.0/12
+      VpcEndpointId: !Ref GwlbEndpoint1
+      RouteTableId: !Ref NatGwRouteTable1
+
+  NatgwRtb1Rfc192Route:
+    Type: AWS::EC2::Route
+    DependsOn: RetrieveVpceServiceName
+    Properties:
+      DestinationCidrBlock: 192.168.0.0/16
+      VpcEndpointId: !Ref GwlbEndpoint1
+      RouteTableId: !Ref NatGwRouteTable1                  
 
   GWLBeRtb1Natgw1Route:
     Type: AWS::EC2::Route
@@ -884,7 +908,7 @@ Resources:
   TgwAttachRtb1Gwlbe1Route:
     Type: AWS::EC2::Route
     Properties:
-      DestinationCidrBlock: !Ref AccessLocation
+      DestinationCidrBlock: 0.0.0.0/0
       VpcEndpointId: !Ref GwlbEndpoint1
       RouteTableId: !Ref TgwAttachRouteTable1
 
@@ -893,9 +917,33 @@ Resources:
     Type: AWS::EC2::Route
     DependsOn: AttachInternetGateway
     Properties:
-      DestinationCidrBlock: !Ref AccessLocation
+      DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
       RouteTableId: !Ref NatGwRouteTable2
+
+  NatgwRtb2Rfc10Route:
+    Type: AWS::EC2::Route
+    DependsOn: RetrieveVpceServiceName
+    Properties:
+      DestinationCidrBlock: 10.0.0.0/8
+      VpcEndpointId: !Ref GwlbEndpoint2
+      RouteTableId: !Ref NatGwRouteTable2
+
+  NatgwRtb2Rfc172Route:
+    Type: AWS::EC2::Route
+    DependsOn: RetrieveVpceServiceName
+    Properties:
+      DestinationCidrBlock: 172.16.0.0/12
+      VpcEndpointId: !Ref GwlbEndpoint2
+      RouteTableId: !Ref NatGwRouteTable2
+
+  NatgwRtb2Rfc192Route:
+    Type: AWS::EC2::Route
+    DependsOn: RetrieveVpceServiceName
+    Properties:
+      DestinationCidrBlock: 192.168.0.0/16
+      VpcEndpointId: !Ref GwlbEndpoint2
+      RouteTableId: !Ref NatGwRouteTable2      
 
   FirewallRtb2Natgw2Route:
     Type: AWS::EC2::Route
@@ -907,7 +955,7 @@ Resources:
   TgwAttachRtb2Gwlbe2Route:
     Type: AWS::EC2::Route
     Properties:
-      DestinationCidrBlock: !Ref AccessLocation
+      DestinationCidrBlock: 0.0.0.0/0
       VpcEndpointId: !Ref GwlbEndpoint2
       RouteTableId: !Ref TgwAttachRouteTable2
 
