@@ -57,6 +57,10 @@ Certain Assumption and changes have been made from previous iterations of the Pa
 1. Create an S3 bucket to [bootstrap the firewall](https://docs.paloaltonetworks.com/vm-series/10-0/vm-series-deployment/bootstrap-the-vm-series-firewall/bootstrap-the-vm-series-firewall-in-aws.html) with the init-cfg.txt and any other necessary configuration items. 
 2. Add the asglambdas.zip file to the root of the bootstrap. 
 3. Deploy the cloudformation template.
+4. Attach to TGW if necessary.
+    - Update the GWLBe Subnet Route tables to send proper spoke routes to the TGW.
+5. Create [GWLB endpoints](https://docs.paloaltonetworks.com/vm-series/10-0/vm-series-deployment/set-up-the-vm-series-firewall-on-aws/vm-series-integration-with-gateway-load-balancer/integrate-the-vm-series-with-an-aws-gateway-load-balancer/associate-a-vpc-endpoint-with-a-vm-series-interface.html) in other VPCs for inbound routing.
+    - Routing examples can be found in the [Reference Architecture](https://www.paloaltonetworks.com/resources/reference-architectures/aws).
 
 ## To-Do List
 - [x] ~~Add RFC 1918 Routes to the NatGW RTB~~
