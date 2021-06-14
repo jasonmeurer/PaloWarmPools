@@ -128,7 +128,6 @@ Parameters:
     Description: Firewall VPC - Availability Zone 1
     Type: AWS::EC2::AvailabilityZone::Name
     ConstraintDescription: Valid Availability Zone Id
-    Default: us-west-2a
   TgwAttachSubnet1Cidr:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
     Default: 192.168.1.0/28
@@ -151,7 +150,6 @@ Parameters:
     Description: Firewall VPC - Availability Zone 2
     Type: AWS::EC2::AvailabilityZone::Name
     ConstraintDescription: Valid Availability Zone Id
-    Default: us-west-2b
   TgwAttachSubnet2Cidr:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
     Default: 192.168.1.48/28
@@ -190,7 +188,6 @@ Parameters:
     Description: EC2 KeyPair required for accessing EC2 instance
     Type: AWS::EC2::KeyPair::KeyName
     ConstraintDescription: Must be the name of an existing EC2 KeyPair
-    Default: awsmain
   AccessLocation:
     Description: >-
       Enter desired Network CIDR to allow traffic to Firewall. Default is set to
@@ -220,7 +217,6 @@ Parameters:
     Description: >- 
       Firewall AMI ID
     Type: AWS::EC2::Image::Id
-    Default: ami-0073e5cfb0d4d3b28
   VMSeriesInstanceType:  
     Description: >- 
       Firewall Instance model
@@ -265,7 +261,6 @@ Parameters:
     Description: >- 
       Firewall Bootstrap Bucket
     Type: String  
-    Default: jjmwarmwest2
   lambdapackagezip:
     Description: >-
       Zip file containing the ASG Lambda files
@@ -294,19 +289,16 @@ Parameters:
   csplicensekey:
     Description: >-
         API Key to DeRegister firewall from CSP.  Leave blank if using PayGo
-    Default: a304904fb7b036f5d320dc8ced49648c5eee25c5ad0221a4b9eea83c207f6950
     Type: String
     NoEcho: True
   KeyPANWFirewall:
     Description: >-
         API Key access the firewall.  Should correspond to credentials pushed from Panorama
-    Default: LUFRPT1Zd2pYUGpkMUNrVEZlb3hROEQyUm95dXNGRkU9N0d4RGpTN2VZaVZYMVVoS253U0p6dlk3MkM0SDFySEh2UUR4Y3hzK2g3ST0=
     Type: String 
     NoEcho: True  
   KeyPANWPanorama:
     Description: >-
         API Key access the Panorama.  
-    Default: LUFRPT1OcW9tMDN3ZXR4VlNMUjVjQUVKb2RSYmpUSzQ9U0RYZlczdCtmRTJ3NG8rR2lPbVZWWjBnTTVoNjhYYnp3eit0TmdhemVnMjBPRUwySjdVdzZXbFUzeHMxWGZ5TA==
     Type: String     
     NoEcho: True       
   CloudWatchScalingNamespace:
@@ -314,6 +306,10 @@ Parameters:
       Add the Name Space configured in the VM-Series Plugi-in for CloudWatch Metrics.
     Default: gwlbasg1_FW_PANW_ASG
     Type: String
+
+
+Conditions:
+  IsChina: !Equals [ !Sub '${AWS::URLSuffix}', 'amazonaws.com.cn']    
              
 Resources:
 
@@ -694,122 +690,7 @@ Resources:
         - !Ref Gwlb
       AcceptanceRequired: false
 
-
-## Create Lambda Custom Resource to retrieve VPC Endpoint Service Name:
-  VpceServiceLambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: root
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*
-              - Effect: Allow
-                Action:
-                  - ec2:DescribeVpcEndpointServiceConfigurations
-                  - ec2:DescribeVpcEndpointServicePermissions
-                  - ec2:DescribeVpcEndpointServices
-                Resource: "*"
-
-  # Lambda creates CloudWatch Log Group.
-  # Since CF stack didn't explicitly create the Log Group, Log Group doesn't get deleted when stack is deleted.
-  # Hence creating Log Group though the stack for Lambda specific funciton.
-  # Their are few things to consider. For more details refer to: https://github.com/aws/serverless-application-model/issues/1216
-  VpceServiceLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-        LogGroupName: !Sub /aws/lambda/${AWS::StackName}-gwlb-svcname
-        RetentionInDays: 1
-
-  VpceServiceName:
-    Type: AWS::Lambda::Function
-    DependsOn: VpceServiceLogGroup
-    Properties:
-      FunctionName: !Sub ${AWS::StackName}-gwlb-service
-      Handler: "index.handler"
-      Role: !GetAtt VpceServiceLambdaExecutionRole.Arn
-      Code:
-        ZipFile: |
-          import json
-          import logging
-          import time
-
-          import boto3
-          import cfnresponse
-          from botocore.exceptions import ClientError
-
-          try:
-              ec2 = boto3.client('ec2')
-          except ClientError as e:
-              logger.error(f"ERROR: failed to connect to EC2 client: {e}")
-              sys.exit(1)              
-
-          def handler(event, context):
-              logger = logging.getLogger()
-              logger.setLevel(logging.INFO)
-              logger.info('Received event: {}'.format(json.dumps(event)))
-
-              responseData = {}
-              responseStatus = cfnresponse.FAILED
-
-              try:
-                  serviceid = event["ResourceProperties"]["VpceServiceId"]                
-              except Exception as e:
-                  logger.info('Attribute retrival failure: {}'.format(e))
-
-              try:
-                  if event["RequestType"] == "Delete":    
-                      responseStatus = cfnresponse.SUCCESS
-                      cfnresponse.send(event, context, responseStatus, responseData)
-              except Exception:
-                  logger.exception("Signaling failure to CloudFormation.")
-                  cfnresponse.send(event, context, cfnresponse.FAILED, {})
-
-              if event["RequestType"] == "Create":
-                  logger.info("Retrieving VPC Endpoint Service Name:")
-                  try:
-                      response = ec2.describe_vpc_endpoint_service_configurations(
-                          Filters=[
-                              {
-                                  'Name': 'service-id',
-                                  'Values': [serviceid]
-                              }
-                          ]
-                      )
-                  except Exception as e:
-                      logger.info('ec2.describe_vpc_endpoint_service_configurations failure: {}'.format(e))
-
-                  service_name = response['ServiceConfigurations'][0]['ServiceName']
-
-                  time.sleep(120)
-
-                  responseData['ServiceName'] = service_name             
-                  responseStatus = cfnresponse.SUCCESS
-                  cfnresponse.send(event, context, responseStatus, responseData)      
-      Runtime: python3.8
-      Timeout: 150
-
-  RetrieveVpceServiceName:
-    Type: Custom::RetrieveAttributes
-    Properties:
-      ServiceToken: !GetAtt VpceServiceName.Arn
-      VpceServiceId: !Ref VpcEndpointService
-        
+## Update ASG instance sizes        
   asgupdateServiceName:
     Type: AWS::Lambda::Function
     Properties:
@@ -849,7 +730,13 @@ Resources:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       VpcId: !Ref Vpc
-      ServiceName: !GetAtt RetrieveVpceServiceName.ServiceName
+      ServiceName: !Join
+        - ''
+        - - !If [IsChina, cn.com.amazonaws, com.amazonaws]
+          - .vpce.
+          - !Ref "AWS::Region"
+          - .
+          - !Ref VpcEndpointService
       VpcEndpointType: GatewayLoadBalancer
       SubnetIds:
         - !Ref GWLBeSubnet1
@@ -858,7 +745,13 @@ Resources:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       VpcId: !Ref Vpc
-      ServiceName: !GetAtt RetrieveVpceServiceName.ServiceName
+      ServiceName: !Join
+        - ''
+        - - !If [IsChina, cn.com.amazonaws, com.amazonaws]
+          - .vpce.
+          - !Ref "AWS::Region"
+          - .
+          - !Ref VpcEndpointService
       VpcEndpointType: GatewayLoadBalancer
       SubnetIds:
         - !Ref GWLBeSubnet2
@@ -876,7 +769,6 @@ Resources:
 
   NatgwRtb1Rfc10Route:
     Type: AWS::EC2::Route
-    DependsOn: RetrieveVpceServiceName
     Properties:
       DestinationCidrBlock: 10.0.0.0/8
       VpcEndpointId: !Ref GwlbEndpoint1
@@ -884,7 +776,6 @@ Resources:
 
   NatgwRtb1Rfc172Route:
     Type: AWS::EC2::Route
-    DependsOn: RetrieveVpceServiceName
     Properties:
       DestinationCidrBlock: 172.16.0.0/12
       VpcEndpointId: !Ref GwlbEndpoint1
@@ -892,7 +783,6 @@ Resources:
 
   NatgwRtb1Rfc192Route:
     Type: AWS::EC2::Route
-    DependsOn: RetrieveVpceServiceName
     Properties:
       DestinationCidrBlock: 192.168.0.0/16
       VpcEndpointId: !Ref GwlbEndpoint1
@@ -923,7 +813,6 @@ Resources:
 
   NatgwRtb2Rfc10Route:
     Type: AWS::EC2::Route
-    DependsOn: RetrieveVpceServiceName
     Properties:
       DestinationCidrBlock: 10.0.0.0/8
       VpcEndpointId: !Ref GwlbEndpoint2
@@ -931,7 +820,6 @@ Resources:
 
   NatgwRtb2Rfc172Route:
     Type: AWS::EC2::Route
-    DependsOn: RetrieveVpceServiceName
     Properties:
       DestinationCidrBlock: 172.16.0.0/12
       VpcEndpointId: !Ref GwlbEndpoint2
@@ -939,7 +827,6 @@ Resources:
 
   NatgwRtb2Rfc192Route:
     Type: AWS::EC2::Route
-    DependsOn: RetrieveVpceServiceName
     Properties:
       DestinationCidrBlock: 192.168.0.0/16
       VpcEndpointId: !Ref GwlbEndpoint2
@@ -1388,7 +1275,4 @@ Outputs:
   FirewallBastionHostPublicIp:
     Description: Firewall VPC Bastion Instance Public IP
     Value: !GetAtt BastionHost.PublicIp     
-  GWLBServiceName:
-    Description: GWLB Service Name
-    Value: !GetAtt RetrieveVpceServiceName.ServiceName
  

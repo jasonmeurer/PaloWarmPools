@@ -11,7 +11,6 @@ This repository contains a CloudFormation Template and supporting Lambda Functio
 - ASG of VM-Series Firewalls with support warm pools, scaling policy and metrics
     - [Warm Pools](https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-warm-pools.html)
 - 3 Lambda Functions for Lifecylce hooks
-- 1 Lambda Function to retrieve the GWLB endpoint service name.
 - 1 Lambda Function to to update ASG isntance specs after permissions complete
 - 3 EventBridge Rules to trigger the lambdas
 - 1 Amazon Linux 2 acting as bastion host
@@ -26,7 +25,7 @@ Certain Assumption and changes have been made from previous iterations of the Pa
 - Utilize EventBridge instead of timers
 - Use ASGs with 2 interfaces per instance rather than all of the added eni python scripting
 - Cloudwatch will retries a lamnda twice after timeouts.  Implemented the necessary timing rather than selfcalling lambdas.
-- 5 Lambdas
+- 4 Lambdas
     - Warm Pool Build
         - Check when firewall up before releasing <h3>NOTE this is the critical piece when using Warm Pools.  Other wise the ASG will stop the firewall during the bootstrap process.</h3>
         - Requires Panorama Push
@@ -38,7 +37,6 @@ Certain Assumption and changes have been made from previous iterations of the Pa
         - Dereg if BYOL
     - Update ASG capacities once lifecycle automation is built
         - Must be done after the lifecycle automation is complete otherwise the firewalls start before the lambdas are built.
-    - Retrieve the GWLB Service Name (AWS still does not have a native CFT/TF call for this)    
 - Supports Multiple Zones
 
 
@@ -66,6 +64,7 @@ Certain Assumption and changes have been made from previous iterations of the Pa
 - [x] ~~Add RFC 1918 Routes to the NatGW RTB~~
 - [x] ~~Clean-up unused declaration blocks in the yaml.~~
 - [x] ~~Diagram~~
+- [x] ~~Remove Service Name Lambda~~
 - [ ] Cleanup the logging in in the python files, I am currently logging almost everything.
 - [ ] Look for areas to improve error handling in the python.
 - [ ] Support User Data bootstrapping of the DG and TS. (Deciding whether or not to just ask for the DG and TS in the template)
