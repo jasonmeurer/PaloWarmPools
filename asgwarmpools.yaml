@@ -1259,7 +1259,7 @@ Resources:
         - Name: AutoScalingGroupName
           Value: !Ref FirewallASG
       Unit: Percent
-      Period: 180
+      Period: 1800
       MetricName: panSessionUtilization
       TreatMissingData: missing
       Namespace: !Ref CloudWatchScalingNamespace
