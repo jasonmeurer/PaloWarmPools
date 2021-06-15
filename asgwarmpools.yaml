@@ -1100,6 +1100,7 @@ Resources:
         - !Ref AvailabilityZone1
         - !Ref AvailabilityZone2
       HealthCheckGracePeriod: 300
+      HealthCheckType: ELB      
       LaunchTemplate: 
         LaunchTemplateId: !Ref FirewallTemplate
         Version: !GetAtt FirewallTemplate.DefaultVersionNumber
