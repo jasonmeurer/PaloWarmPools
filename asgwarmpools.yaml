@@ -1238,13 +1238,14 @@ Resources:
         - Name: AutoScalingGroupName
           Value: !Ref FirewallASG
       Unit: Percent
-      Period: 300
-      MetricName: DataPlaneCPUUtilizationPct
+      Period: 900
+      MetricName: panSessionUtilization
       TreatMissingData: missing
       Namespace: !Ref CloudWatchScalingNamespace
       EvaluationPeriods: 1
       Statistic: Average
-      Threshold: 80
+      Threshold: 60
+
   ScaleDownAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties: 
@@ -1258,13 +1259,13 @@ Resources:
         - Name: AutoScalingGroupName
           Value: !Ref FirewallASG
       Unit: Percent
-      Period: 300
-      MetricName: DataPlaneCPUUtilizationPct
+      Period: 180
+      MetricName: panSessionUtilization
       TreatMissingData: missing
       Namespace: !Ref CloudWatchScalingNamespace
       EvaluationPeriods: 1
       Statistic: Average
-      Threshold: 30
+      Threshold: 50
 
 
 Outputs:
