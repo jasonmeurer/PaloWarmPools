@@ -1230,7 +1230,7 @@ Resources:
     Properties: 
       ActionsEnabled: True
       AlarmActions: 
-        - !Ref ScaleDownASG
+        - !Ref ScaleUpASG
       AlarmDescription: Scale up ASG based on high Dataplane CPU
       AlarmName: !Sub ${AWS::StackName}-ScaleUp-Alarm
       ComparisonOperator: GreaterThanThreshold
