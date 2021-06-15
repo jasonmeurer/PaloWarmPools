@@ -28,7 +28,6 @@ AWSTemplateFormatVersion: "2010-09-09"
       # - ASG of VM-Series Firewalls with support warm pools, scaling policy and metrics
       #     - [Warm Pools](https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-warm-pools.html)
       # - 3 Lambda Functions for Lifecylce hooks
-      # - 1 Lambda Function to retrieve the GWLB endpoint service name.
       # - 1 Lambda Function to to update ASG isntance specs after permissions complete
       # - 3 EventBridge Rules to trigger the lambdas
       # - 1 Amazon Linux 2 acting as bastion host
@@ -728,6 +727,7 @@ Resources:
 # Create Gateway Load Balancer Endpoint:
   GwlbEndpoint1:
     Type: AWS::EC2::VPCEndpoint
+    DependsOn: VpcEndpointService
     Properties:
       VpcId: !Ref Vpc
       ServiceName: !Join
@@ -743,6 +743,7 @@ Resources:
 
   GwlbEndpoint2:
     Type: AWS::EC2::VPCEndpoint
+    DependsOn: VpcEndpointService
     Properties:
       VpcId: !Ref Vpc
       ServiceName: !Join
